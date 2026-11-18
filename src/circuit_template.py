@@ -324,7 +324,11 @@ def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
 def collisions(s,v,L):
     "retourne le teableau de (ind leader, v_collision)"
     impacts = []
-    g = gaps(s,L)
+    for _ in range(len(v)):
+        fautifs = np.flatnonzero(gaps(s,L) < 0)
+        if len(fautifs) == 0:
+            break
+
 
 
 
