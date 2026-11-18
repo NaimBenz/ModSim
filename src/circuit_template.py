@@ -10,6 +10,9 @@ MEDIAN_WIDTH = 3.0    # largeur du terre-plein central [m]
 N_LANES = 2           # nombre de voies par sens
 VEH_LENGTH = 5.0      # longueur d'un véhicule [m]
 VEH_WIDTH = 1.9       # largeur d'un véhicule [m]
+V_LIM = 30.0
+A_MAX = 3.0
+B_MAX = 9.0
 
 # demi-largeur totale de la route (de l'axe jusqu'au bord extérieur)
 HALF_ROAD = MEDIAN_WIDTH / 2 + N_LANES * LANE_WIDTH
@@ -285,3 +288,54 @@ def print_neighbours_table(veh, L):
     cols_gap = ["gap avant [m]", "gap arrière [m]", "gap autre voie [m]"]
     return (df.style.format({"s [m]": "{:.1f}", "v [m/s]": "{:.1f}", **{c: "{:.1f}" for c in cols_gap}}, na_rep="—")
     .background_gradient(subset=cols_gap, cmap="RdYlGn", vmin=0, vmax=60).set_caption("Voisins de chaque véhicule (gap = pare-chocs à pare-chocs)"))
+
+
+def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
+    V_LIM = 30.0
+    A_MAX = 3.0
+    B_MAX = 9.0
+    L = circuit.L
+
+
+    if algo=="euler r":
+        pass
+
+    elif algo == "euler":
+        pass
+
+    elif algo == "rk":
+        pass
+    else:
+        raise ValueError(f"Algorithme inconnu : {algo}")
+
+
+    new_v = np.clip(new_v,0.0,V_LIM)
+
+
+    impacts = collisions(new_s,new_v,L)
+
+
+
+    return new_s, new_v, a, impacts
+
+
+
+
+def collisions(s,v,L):
+    "retourne le teableau de (ind leader, v_collision)"
+    impacts = []
+    g = gaps(s,L)
+
+
+
+    return 
+
+
+
+
+def gaps(s,L,l=VEH_LENGTH):
+    "retourne le tableau des gaps entre les voiture"
+    s_leader = np.roll(s,1) # Ici par exemple s_leader[0] correspond à la voiture devant s[0]
+    s_leader[0] += L # gemini m'a expliqué qu'il faut mettre ca pour bouclé l'anneau
+    return s_leader - s -l # on retire l pour avoir la distance par choc avant à par choc arrière
+
