@@ -17,6 +17,7 @@ B_MAX = 9.0
 # demi-largeur totale de la route (de l'axe jusqu'au bord extérieur)
 HALF_ROAD = MEDIAN_WIDTH / 2 + N_LANES * LANE_WIDTH
 
+STRATEGIES = {} #associer un string à une fonction de strategie de conduite
 
 def lane_offset(direction, lane):
     """Décalage latéral (signé) du centre d'une voie par rapport à l'axe du circuit."""
@@ -297,10 +298,7 @@ def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
     L = circuit.L
 
 
-    if algo=="euler r":
-        pass
-
-    elif algo == "euler":
+    if algo == "euler":
         pass
 
     elif algo == "rk":
@@ -310,14 +308,20 @@ def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
 
 
     new_v = np.clip(new_v,0.0,V_LIM)
-
-
+    a = (new_v-v)/dt
     impacts = collisions(new_s,new_v,L)
 
 
 
     return new_s, new_v, a, impacts
 
+
+def derivees(s,v,L,params):
+
+
+
+
+    return v,a
 
 
 
@@ -353,3 +357,8 @@ def gaps(s,L,l=VEH_LENGTH):
     s_leader[0] += L # gemini m'a expliqué qu'il faut mettre ca pour bouclé l'anneau
     return s_leader - s -l # on retire l pour avoir la distance par choc avant à par choc arrière
 
+
+
+
+def acceleration(gap,v,dv,params):
+    return STRATEGIES[params["strat"]](gap,v,dv,params)
