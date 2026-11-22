@@ -329,10 +329,20 @@ def collisions(s,v,L):
         if len(fautifs) == 0:
             break
 
+        for n in fautifs:
+            leader = n - 1
+            if leader == 0:
+                s_leader = s[leader] + L
 
+            else:
+                s_leader = s[leader]
 
-
-    return 
+            if s_leader - s[n] - VEH_LENGTH < 0:
+                impacts.append((n,v[n]-v[leader]))
+                s[n] = s[leader] - VEH_LENGTH
+                v[n] = v[leader]
+            
+    return impacts
 
 
 
