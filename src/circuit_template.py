@@ -312,7 +312,7 @@ def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
 
 
     new_v = np.clip(new_v,0.0,V_LIM)
-    a = (new_v-v)/dt
+    a = (new_v - v)/dt
     impacts = collisions(new_s,new_v,L)
 
 
@@ -343,7 +343,7 @@ def collisions(s,v,L):
         if len(fautifs) == 0:
             break
 
-        for n in fautifs:
+        for n in fautifs: # on regarder pour chaque collision si ca n'a pas provoqué une collision en chaine
             leader = n - 1
             if leader == 0:
                 s_leader = s[leader] + L
