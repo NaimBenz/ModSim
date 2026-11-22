@@ -292,17 +292,21 @@ def print_neighbours_table(veh, L):
 
 
 def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
-    V_LIM = 30.0
-    A_MAX = 3.0
-    B_MAX = 9.0
     L = circuit.L
 
 
     if algo == "euler":
-        pass
+        ds,a = saturation_acceleration(s,v,L,params)
+        new_v = v + a * dt
+        new_s = s + ds * dt
 
-    elif algo == "rk":
-        pass
+    elif algo == "rk4":
+        s1 , v1 = saturation_acceleration(s,v,L,params)
+        s2 , v2 = saturation_acceleration(s +dt/2 * s1,v+dt/2*v1,L,params)
+        s3 , v3 = saturation_acceleration(s +dt/2 * s2,v+dt/2*v2,L,params)
+        s4 , v4 = saturation_acceleration(s +dt/2 * s3,v+dt/2*v3,L,params)
+        new_s = s + dt/6 *(s1+2*s2+2*s3+s4)
+        new_v = v + dt/6 *(v1+2*v2+2*v3+v4)
     else:
         raise ValueError(f"Algorithme inconnu : {algo}")
 
@@ -316,10 +320,16 @@ def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
     return new_s, new_v, a, impacts
 
 
-def derivees(s,v,L,params):
+def saturation_acceleration(s,v,L,params):
+    v = np.clip(v,0.0,V_LIM)
+    g = gaps(s,L)
+    delta_v = np.roll(v,1) -v # delta V = v_leader - v_n
+    
+    a = np.clip(acceleration(g,v,delta_v,params),-B_MAX,A_MAX) #saturation de l'acceleration 
 
-
-
+    #pas de vitesse négative et pas de vitesse superieur à la limite
+    a = np.where((v <= 0.0) & (a < 0.0), 0.0, a)
+    a = np.where((v >= V_LIM) & (a > 0.0), 0.0, a)
 
     return v,a
 
