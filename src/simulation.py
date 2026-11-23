@@ -47,14 +47,16 @@ def int_single_lane(circuit, N, layout="uniform", seed=0, jitter=0.0):
 
 def simulate(s0, v0, circuit, params, t_end=600.0, dt=0.1, algo="rk4"):
     """Step from circuit_template.py to simulate the dynamics of vehicles on a circuit. Step forgets about the past, so we need to keep track of the history of the simulation in this function."""
-    K = int(round(t_end / dt))
-    N = len(s0)
-    S = np.empty((K+1, N))
+    K = int(round(t_end / dt)) #gives nmbr of steps
+    N = len(s0)#gives nmbr of cars
+
+    S = np.empty((K+1, N))#intervals of time, each row is a time step, each column is a vehicle
     V = np.empty((K+1, N))
-    A = np.empty((K+1, N))
+    A = np.empty((K, N))# during a step
+
     S[0], V[0] = s0, v0
     collisions = []
-    s, v = np.array(s0, float), np.array(v0, float)
+    s, v = np.array(s0, float), np.array(v0, float)#copies from real values
 
     for k in range(K):
         s, v, a, impacts = step(s, v, dt, circuit, params, algo)
