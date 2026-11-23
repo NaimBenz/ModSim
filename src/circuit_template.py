@@ -291,7 +291,7 @@ def print_neighbours_table(veh, L):
     .background_gradient(subset=cols_gap, cmap="RdYlGn", vmin=0, vmax=60).set_caption("Voisins de chaque véhicule (gap = pare-chocs à pare-chocs)"))
 
 
-def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
+def step(s,v, dt, circuit, params, algo="euler"):
     L = circuit.L
 
 
@@ -301,12 +301,12 @@ def step(s,v, dt, circuit, params, algo="Eurler Retrograde"):
         new_s = s + ds * dt
 
     elif algo == "rk4":
-        s1 , v1 = saturation_acceleration(s,v,L,params)
-        s2 , v2 = saturation_acceleration(s +dt/2 * s1,v+dt/2*v1,L,params)
-        s3 , v3 = saturation_acceleration(s +dt/2 * s2,v+dt/2*v2,L,params)
-        s4 , v4 = saturation_acceleration(s +dt/2 * s3,v+dt/2*v3,L,params)
-        new_s = s + dt/6 *(s1+2*s2+2*s3+s4)
-        new_v = v + dt/6 *(v1+2*v2+2*v3+v4)
+        ks1 , kv1 = saturation_acceleration(s,v,L,params) # pente au début de l'interval dt
+        ks2 , kv2 = saturation_acceleration(s +dt/2 * ks1,v + dt/2 *kv1,L,params) # 1e pente au milieu de l'interval dt
+        ks3 , kv3 = saturation_acceleration(s +dt/2 * ks2,v +dt/2 *kv2,L,params)# 2e pente au milieu de l'interval dt
+        ks4 , kv4 = saturation_acceleration(s +dt * ks3,v + dt * kv3,L,params)# pente à la fin de l'interval dt
+        new_s = s + dt/6 *(ks1+2*ks2+2*ks3+ks4) # calcule de la position en pondérant les différentes pentes 
+        new_v = v + dt/6 *(kv1+2*kv2+2*kv3+kv4)# calcule de la vitesse en pondérant les différentes pentes 
     else:
         raise ValueError(f"Algorithme inconnu : {algo}")
 
@@ -336,24 +336,24 @@ def saturation_acceleration(s,v,L,params):
 
 
 def collisions(s,v,L):
-    "retourne le teableau de (ind leader, v_collision)"
+    "retourne le teableau de (indice leader, vitesse relative à l'impacte )"
     impacts = []
     for _ in range(len(v)):
-        fautifs = np.flatnonzero(gaps(s,L) < 0)
+        fautifs = np.flatnonzero(gaps(s,L) < -1e-9) # < 1e-9 pour contrer les erreurs d'arrondie sinon on pourait avoir une collision compatbilisé plusieurs fois
         if len(fautifs) == 0:
             break
 
         for n in fautifs: # on regarder pour chaque collision si ca n'a pas provoqué une collision en chaine
             leader = n - 1
-            if leader == 0:
+            if n == 0:
                 s_leader = s[leader] + L
 
             else:
                 s_leader = s[leader]
 
-            if s_leader - s[n] - VEH_LENGTH < 0:
+            if s_leader - s[n] - VEH_LENGTH < -1e-9:
                 impacts.append((n,v[n]-v[leader]))
-                s[n] = s[leader] - VEH_LENGTH
+                s[n] = s_leader - VEH_LENGTH
                 v[n] = v[leader]
             
     return impacts
