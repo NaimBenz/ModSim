@@ -1,6 +1,8 @@
 import numpy as np
 from circuit_template import VEH_LENGTH, STRATEGIES, place_vehicles, step, gaps
 
+"""simulate.py produit les données et critères.py les analyse. Le code est séparé pour permettre de tester différentes stratégies de conduite sans avoir à réécrire la simulation."""
+
 # 1. Stratégie IDM (car following model)
 
 def idm(gap, v, dv, p):
@@ -41,6 +43,26 @@ def int_single_lane(circuit, N, layout="uniform", seed=0, jitter=0.0):
 
     return s, v
 
+# 3. Simulation loop
+
+def simulate(s0, v0, circuit, params, t_end=600.0, dt=0.1, algo="rk4"):
+    """Step from circuit_template.py to simulate the dynamics of vehicles on a circuit. Step forgets about the past, so we need to keep track of the history of the simulation in this function."""
+    K = int(round(t_end / dt))
+    N = len(s0)
+    S = np.empty((K+1, N))
+    V = np.empty((K+1, N))
+    A = np.empty((K+1, N))
+    S[0], V[0] = s0, v0
+    collisions = []
+    s, v = np.array(s0, float), np.array(v0, float)
+
+    for k in range(K):
+        s, v, a, impacts = step(s, v, dt, circuit, params, algo)
+        S[K+1], V[K+1], A[K+1] = s, v, a #keep all the history of the sim
+        for n, dv in impacts:
+            collisions.append(((k+1)*dt, n, dv))
+    
+    return {"t": np.arange(K+1)*dt, "s": S, "v": V, "a": A, "collisions": collisions, "L": circuit["L"], "dt": dt}
 
 
 
