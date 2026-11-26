@@ -11,12 +11,13 @@ def idm(gap, v, dv, p):
     b = p['b']  # comfortable deceleration
     v0 = p['v0']  # desired speed
     s0 = p['s0']  # minimum gap
-    T = p['T']  # safe time headway, parameter that controls how much distance the vehicle wants to keep from the vehicle in front
+    T = p['T'] #time headway
+    delta = p['delta']  # acceleration exponent
 
     #s*, derired dynamical distance
-    s_star = s0 + np.maximum(0, v * T + (v * dv) / (2 * np.sqrt(a * b)))
+    s_star = s0 + np.maximum(0, v * T - (v * dv) / (2 * np.sqrt(a * b)))
     gap = np.maximum(gap, 0.1)  # avoid division by zero
-    return a * (1 - (v / v0) - (s_star / gap) ** 2)
+    return a * (1 - (v / v0)**delta - (s_star / gap) ** 2)
 
 STRATEGIES["idm"] = idm
 
