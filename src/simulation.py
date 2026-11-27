@@ -31,7 +31,7 @@ IDM = {"strat": "idm",
 
 # 2. Place N vehicules on 1 lane
 
-def int_single_lane(circuit, N, layout="uniform", seed=0, jitter=0.0):
+def init_single_lane(circuit, N, layout="uniform", seed=0, jitter=0.0):
     veh = place_vehicles(circuit, N, layout=layout, seed=seed)#calls f from circuit_template.py
     keep = (veh["direction"] == 1) & (veh["lane"]==0)#keep only one line and one direction
     s = np.sort(veh["s"][keep])[::-1].copy()
@@ -39,7 +39,7 @@ def int_single_lane(circuit, N, layout="uniform", seed=0, jitter=0.0):
         rng = np.random.default_rng(seed)
         s += rng.uniform(-jitter, jitter, N)
     v = np.zeros(N)
-    if np.any(gaps(s, circuit) < 0):
+    if np.any(gaps(s, circuit.L) < 0):
         raise ValueError("Vehicles are overlapping")
 
     return s, v
