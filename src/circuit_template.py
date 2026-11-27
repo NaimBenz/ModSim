@@ -291,7 +291,7 @@ def print_neighbours_table(veh, L):
     .background_gradient(subset=cols_gap, cmap="RdYlGn", vmin=0, vmax=60).set_caption("Voisins de chaque véhicule (gap = pare-chocs à pare-chocs)"))
 
 
-def step(s,v, dt, circuit, params, algo="euler"):
+def step(s,v, dt, circuit, params, algo="rk4"):
     L = circuit.L
 
 
@@ -372,3 +372,48 @@ def gaps(s,L,l=VEH_LENGTH):
 
 def acceleration(gap,v,dv,params):
     return STRATEGIES[params["strat"]](gap,v,dv,params)
+
+
+
+
+def simulate(circuit, s0, v0, params, dt=0.1, t_end=600.0, t_w=300.0, algo="rk4", emergency=None):
+    s = np.array(s0,dtype=float,copy=True)
+    v = np.array(v0,dtype=float,copy=True)
+
+    
+    N = len(s)
+    n_step = int(round(t_end/dt))
+
+    t_hist = np.arange(n_step) * dt
+    s_hist = np.empty((n_step,N))
+    v_hist = np.empty((n_step,N))
+    a_hist = np.empty((n_step,N))
+    all_impacts = []
+
+
+    for i in range(n_step):
+
+        s,v,a,impacts = step(s,v,dt,circuit,params,algo)
+
+        t = i * dt
+        s_hist[i] = s
+        v_hist[i] = v
+        a_hist[i] = a
+
+        for idx, v_impact in impacts:
+            all_impacts.append((t,idx,v_impact))
+
+
+
+
+
+    return {"t": t_hist,
+        "s": s_hist,
+        "v": v_hist,
+        "a": a_hist,
+        "impacts": all_impacts,
+        "t_w": t_w,
+        "dt": dt,}
+
+
+
