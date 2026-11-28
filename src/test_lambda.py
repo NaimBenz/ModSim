@@ -1,57 +1,59 @@
 import numpy as np
-from ovd import build_jacobian, equilibrium_values, OVD
 import matplotlib.pyplot as plt
+from ovd import build_jacobian, equilibrium_values, OVD
 
-
-# Paramètres du circuit pour Anneau de Sugiyama
-# TODO: A changer parce qu'ici c'est juste en placeHolder
-L = 300.0
+# Paramètres du circuit pour l'anneau de Sugiyama
+# TODO: A changer parce qu'ici c'est juste un placeholder
+L = 230.0
 N = 22
 
-"""
-Ecart à l'équilibre -> b
-Vitesse à l'équilibre -> Vb
-Dérivée de la vitesse optimale -> Vpb
-"""
-
-# Calcul de l'équilibre
+# Calcul de l'équilibre : b (écart), Vb (vitesse), Vpb (dérivée V'(b))
 b, Vb, Vpb = equilibrium_values(L, N, OVD)
+a = OVD["a"]
 
-# Valeurs de lambda à tester
+
+def max_re(lam, Vb, Vpb, a, N):
+    """Retourne la plus grande partie réelle des valeurs propres non nulles."""
+    A = build_jacobian(lam, Vb, Vpb, a, N)
+    ev = np.linalg.eigvals(A)
+    # On retire la valeur propre nulle liée à la conservation de la taille du circuit
+    ev_non_nulles = ev[np.abs(ev) > 1e-8]
+    return np.max(ev_non_nulles.real)
+
+
+def find_lambda_c(Vb, Vpb, a, N, lo=0.0, hi=5.0, tol=1e-4):
+    """Trouve le seuil critique lambda_c par dichotomie."""
+    if max_re(lo, Vb, Vpb, a, N) < 0:
+        return 0.0  # Déja stable sans terme en lambda
+    if max_re(hi, Vb, Vpb, a, N) >= 0:  # Les 2 bornes sont instables
+        raise ValueError(f"Toujours instable à lambda = {hi}. Augmente la borne 'hi'.")
+
+    while hi - lo > tol:
+        mid = (lo + hi) / 2
+        if max_re(mid, Vb, Vpb, a, N) >= 0:
+            lo = mid
+        else:
+            hi = mid
+    return hi
+
+
+# Seuil pour lequel lambda sépare la stabilité et l'instabilité
+lam_c = find_lambda_c(Vb, Vpb, a, N)
+print(f"Seuil numérique (valeurs propres) : lambda_c    = {lam_c:.4f}")
+
+# On essaye tout les valeurs entre 0 et 5 pour lambda afin de tester la stabilité
 lambdas = np.arange(0.0, 5.1, 0.1)
+max_reelles = [max_re(lam, Vb, Vpb, a, N) for lam in lambdas]
 
-lambda_stable = []
-max_reelles = []
-
-for lam in lambdas:
-    A = build_jacobian(lam, Vb, Vpb, OVD["a"], N)
-
-    valeurs_propres = np.linalg.eigvals(A)
-
-    # On retire la valeur propre nulle structurelle
-    valeurs_non_nulles = valeurs_propres[np.abs(valeurs_propres) > 1e-8]
-
-    max_reelle = np.max(valeurs_non_nulles.real)
-
-    if max_reelle < -1e-8:
-        print(f"lambda = {lam:.1f} : stable , {max_reelle}")
-        lambda_stable.append(lam)
-        max_reelles.append(max_reelle)
-    else:
-        print(f"lambda = {lam:.1f} : instable ")
-
-"""
-Ce graphe montre seulement que la stabilité augmente plus le
-paramètre lambda augmente. 
-Comme l'OVD avec l'extension + lambda*dv à été fait pour l'appliquer 
-au scénario de l'anneau de Sugiyama, il va falloir à ce moment déterminer le meilleur lambda
-qui garanti la meilleure stabilité.
-"""
-
-plt.plot(lambda_stable, max_reelles, marker="o")
-plt.axhline(0, linestyle="dashed")
-plt.xlabel("Lambda")
+# Graphique qui analyse la stabilité locale
+plt.plot(
+    lambdas, max_reelles, marker="o", markersize=4, label=r"$\max\,\mathrm{Re}(\mu)$"
+)
+plt.axhline(0, color="black", linestyle="dashed")
+plt.axvline(lam_c, color="red", linestyle="dotted", label=rf"$\lambda_c = {lam_c:.3f}$")
+plt.xlabel(r"$\lambda\ (\mathrm{s}^{-1})$")
 plt.ylabel("Plus grande partie réelle")
-plt.title("Stabilité du modèle OVD-DV en fonction de lambda")
+plt.title(f"Stabilité du modèle OVD (L = {L} m, N = {N})")
+plt.legend()
 plt.grid()
 plt.show()
