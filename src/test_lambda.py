@@ -1,15 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ovd import build_jacobian, equilibrium_values, OVD
+from ovd_dv import build_jacobian, equilibrium_values, OVD_DV
 
 # Paramètres du circuit pour l'anneau de Sugiyama
-# TODO: A changer parce qu'ici c'est juste un placeholder
 L = 230.0
 N = 22
 
 # Calcul de l'équilibre : b (écart), Vb (vitesse), Vpb (dérivée V'(b))
-b, Vb, Vpb = equilibrium_values(L, N, OVD)
-a = OVD["a"]
+b, Vb, Vpb = equilibrium_values(L, N, OVD_DV)
+a = OVD_DV["a"]
 
 
 def max_re(lam, Vb, Vpb, a, N):
@@ -21,14 +20,14 @@ def max_re(lam, Vb, Vpb, a, N):
     return np.max(ev_non_nulles.real)
 
 
-def find_lambda_c(Vb, Vpb, a, N, lo=0.0, hi=5.0, tol=1e-4):
+def find_lambda_c(Vb, Vpb, a, N, lo=0.0, hi=5.0, lim=1e-4):
     """Trouve le seuil critique lambda_c par dichotomie."""
     if max_re(lo, Vb, Vpb, a, N) < 0:
         return 0.0  # Déja stable sans terme en lambda
     if max_re(hi, Vb, Vpb, a, N) >= 0:  # Les 2 bornes sont instables
         raise ValueError(f"Toujours instable à lambda = {hi}. Augmente la borne 'hi'.")
 
-    while hi - lo > tol:
+    while hi - lo > lim:
         mid = (lo + hi) / 2
         if max_re(mid, Vb, Vpb, a, N) >= 0:
             lo = mid
@@ -48,12 +47,12 @@ max_reelles = [max_re(lam, Vb, Vpb, a, N) for lam in lambdas]
 # Graphique qui analyse la stabilité locale
 plt.plot(
     lambdas, max_reelles, marker="o", markersize=4, label=r"$\max\,\mathrm{Re}(\mu)$"
-)
+)  # où µ est l'ensemble des valeurs propre de ma jacobienne
 plt.axhline(0, color="black", linestyle="dashed")
 plt.axvline(lam_c, color="red", linestyle="dotted", label=rf"$\lambda_c = {lam_c:.3f}$")
 plt.xlabel(r"$\lambda\ (\mathrm{s}^{-1})$")
 plt.ylabel("Plus grande partie réelle")
-plt.title(f"Stabilité du modèle OVD (L = {L} m, N = {N})")
+plt.title(f"Stabilité du modèle OVD_DV (L = {L} m, N = {N})")
 plt.legend()
 plt.grid()
 plt.show()

@@ -47,7 +47,7 @@ def build_jacobian(lam: float, V: float, Vp: float, a: float, N: int):
     return A
 
 
-def ovd(gap, v, dv, p):
+def ovd_dv(gap, v, dv, p):
     """Optimal velocity difference"""
     a, v0, hc, w, lam = p["a"], p["v0"], p["hc"], p["w"], p["lam"]
     V = v0 / 2 * (np.tanh((gap - hc) / w) + 1)
@@ -57,8 +57,8 @@ def ovd(gap, v, dv, p):
     )  # J'ai ajouter la prise en compte de la vitesse relative au modele ovd
 
 
-STRATEGIES["ovd"] = ovd
+STRATEGIES["ovd_dv"] = ovd_dv
 # Pour les valeurs de a, v0, hc, w, j'ai mis lam = 1.4 car le graphique montre que
 # la fonction est stable de 0.67 à 5 avec un lambda optimal en 4.5
 # TODO: A tester plusieurs valeur de lambda pour le rapport
-OVD = {"strat": "ovd", "a": 3.0, "v0": 30.0, "hc": 10.0, "w": 5.0, "lam": 1.4}
+OVD_DV = {"strat": "ovd_dv", "a": 3.0, "v0": 30.0, "hc": 10.0, "w": 5.0, "lam": 1.4}
