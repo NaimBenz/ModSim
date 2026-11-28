@@ -1,5 +1,26 @@
 import numpy as np
-from circuit_template import STRATEGIES
+from circuit_template import STRATEGIES, VEH_LENGTH
+
+
+def equilibrium_values(L, N, p):
+    a = p["a"]
+    v0 = p["v0"]
+    hc = p["hc"]
+    w = p["w"]
+
+    # Ecart homogène
+    b = L / N - VEH_LENGTH
+
+    # Vitesse optimale à l'équilibre
+    Vb = v0 / 2 * (np.tanh((b - hc) / w) + 1)
+
+    # On tient compte du maximum à 0.1 dans ovd()
+    if Vb <= 0.1:
+        Vb = 0.1
+        Vpb = 0.0
+    else:
+        Vpb = v0 / (2 * w) * (1 - np.tanh((b - hc) / w) ** 2)
+    return b, Vb, Vpb
 
 
 def build_jacobian(lam: float, V: float, DV: float, a: float, N: int):
@@ -32,7 +53,7 @@ def ovd(gap, v, dv, p):
     a, v0, hc, w, lam = p["a"], p["v0"], p["hc"], p["w"], p["lam"]
     V = v0 / 2 * (np.tanh((gap - hc) / w) + 1)
     V = np.maximum(V, 0.1)  # Éviter la division par 0
-    DV = v0 / 2 * w * (1 - np.tanh((gap - hc) / w) ** 2)
+    DV = v0 / (2 * w) * (1 - np.tanh((gap - hc) / w) ** 2)
     return (
         a * (1 - (v / V) ** 2) + lam * dv
     )  # J'ai ajouter la prise en compte de la vitesse relative au modele ovd
